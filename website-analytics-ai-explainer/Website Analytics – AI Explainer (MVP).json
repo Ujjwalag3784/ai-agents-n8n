@@ -1,0 +1,300 @@
+{
+  "name": "Website Analytics – AI Explainer (MVP)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "analytics-question",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -848,
+        -64
+      ],
+      "id": "131e2320-a855-42c1-b8be-fef8228665ad",
+      "name": "Webhook",
+      "webhookId": "5c84aa9a-cc60-43ea-9d38-f7fcd61f8285"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4",
+          "mode": "list",
+          "cachedResultName": "GPT-4"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a senior analytics consultant.\nExplain metrics in simple business language.\nHighlight trends and possible reasons.\n"
+            },
+            {
+              "content": "=Here is the analytics data:\n\n{{$json}}\n\nExplain:\n1. What happened\n2. Why it likely happened\n3. What actions to take\n"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        32,
+        -112
+      ],
+      "id": "9e6b4646-10ca-466e-bdb0-c06c62f3ac1f",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "5GqlL4lIjG8J7KMa",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        352,
+        -80
+      ],
+      "id": "56f41474-9936-4f21-932e-b3db9a19ef05",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get merged items (both branches together)\nconst items = $input.all();\n\n// Branch index:\n// 0 = Current Week\n// 1 = Previous Week\nconst currentWeek = items.filter(i => i.branch === 0);\nconst previousWeek = items.filter(i => i.branch === 1);\n\n// Helper to sum sessions\nfunction sumSessions(rows) {\n  return rows.reduce((sum, r) => {\n    return sum + Number(r.json.sessions || 0);\n  }, 0);\n}\n\nconst currentSessions = sumSessions(currentWeek);\nconst previousSessions = sumSessions(previousWeek);\n\nconst percentChange =\n  previousSessions === 0\n    ? null\n    : (((currentSessions - previousSessions) / previousSessions) * 100).toFixed(1);\n\nreturn [\n  {\n    json: {\n      current_sessions: currentSessions,\n      previous_sessions: previousSessions,\n      percent_change: percentChange\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        128
+      ],
+      "id": "360a4053-307c-41e9-8815-87dee0ccfe16",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "propertyId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "519149393"
+        },
+        "metricsGA4": {
+          "metricValues": [
+            {},
+            {
+              "listName": "sessions"
+            }
+          ]
+        },
+        "dimensionsGA4": {
+          "dimensionValues": [
+            {}
+          ]
+        },
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.googleAnalytics",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        208
+      ],
+      "id": "00196377-5283-4d88-8c59-abdc822bf8ec",
+      "name": "Get a report-Current Week",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleAnalyticsOAuth2": {
+          "id": "X2FgKYvLlTksFSkO",
+          "name": "Google Analytics account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "propertyId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "519149393"
+        },
+        "dateRange": "custom",
+        "startDate": "2026-01-04T00:00:00",
+        "metricsGA4": {
+          "metricValues": [
+            {},
+            {
+              "listName": "sessions"
+            }
+          ]
+        },
+        "dimensionsGA4": {
+          "dimensionValues": [
+            {}
+          ]
+        },
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.googleAnalytics",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        384
+      ],
+      "id": "3997ab53-93db-4b4e-8128-f0f07c443ee0",
+      "name": "Get a report- Previous Week",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleAnalyticsOAuth2": {
+          "id": "X2FgKYvLlTksFSkO",
+          "name": "Google Analytics account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        16,
+        368
+      ],
+      "id": "79ac9b3d-9607-4052-bd90-c651be8f6212",
+      "name": "Merge"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n.srv1243859.hstgr.cloud",
+            "user-agent": "curl/8.5.0",
+            "content-length": "65",
+            "accept": "*/*",
+            "content-type": "application/json",
+            "x-forwarded-for": "172.18.0.1",
+            "x-forwarded-host": "n8n.srv1243859.hstgr.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "6a792d5c3334",
+            "x-real-ip": "172.18.0.1",
+            "accept-encoding": "gzip"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "question": "Why did traffic change compared to last week?"
+          },
+          "webhookUrl": "https://n8n.srv1243859.hstgr.cloud/webhook/analytics-question",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get a report-Current Week",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get a report- Previous Week",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a report-Current Week": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a report- Previous Week": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "fcd98436-72ef-49ee-93e7-eff4c8760cd4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "07266a22f7d6e7ff063fa40199db9a9b34f5b9c27e08a4f6924f2366dcd0f6d8"
+  },
+  "id": "ejEmmvJ6uFsUYsZP",
+  "tags": []
+}
